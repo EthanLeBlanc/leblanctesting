@@ -1,14 +1,21 @@
 {
   "compilerOptions": {
     "target": "esnext",
-    "lib": ["esnext"],
+    "lib": [
+      "esnext"
+    ],
     "module": "esnext",
     "moduleResolution": "bundler",
     "noEmit": true,
     "isolatedModules": true,
     "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true,
-    "strict": true
+    "strict": true,
+    "types": [
+      "./src/worker-configuration.d.ts"
+    ]
   },
-  "include": ["src/shared.ts"]
+  "include": [
+    "src"
+  ]
 }

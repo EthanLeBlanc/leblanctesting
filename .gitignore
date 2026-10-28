@@ -181,3 +181,6 @@ build/
 
 # Turbo output
 .turbo/
+
+# Local secrets
+.dev.vars

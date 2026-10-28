@@ -1,44 +1,63 @@
-# Multiplayer Globe App
+# MX Bikes Shop
 
-[![Deploy to Cloudflare](https://deploy.workers.cloudflare.com/button)](https://deploy.workers.cloudflare.com/?url=https://github.com/cloudflare/templates/tree/main/leblanctesting)
+A small storefront for selling your own MX Bikes setups, tracks and skins. It runs on Cloudflare Workers, takes payment with Stripe Checkout, keeps the files in Cloudflare R2, and gives each buyer download links that expire.
 
-![Multiplayer Globe Template Preview](https://imagedelivery.net/wSMYJvS3Xw-n339CbDyDIA/43100bd9-8e11-4c20-cc00-3bec86253f00/public)
+- **No database.** The catalog is a TypeScript file (`src/catalog.ts`). Stripe keeps the order records, and a download link is an HMAC-signed token, so there is nothing else to store.
+- **Free items** download straight away. Use one as a free sample that sends people to the paid items.
+- **Bundles** sell several products at a discount, and the buyer gets every file in the bundle.
+- **Promo codes:** Checkout accepts the promotion codes you create in the Stripe dashboard, which is handy for creators and Discord giveaways.
+- **Download links** stay valid for `DOWNLOAD_WINDOW_DAYS` (7 by default) after purchase. Buyers can bookmark the page that lists them.
 
-<!-- dash-content-start -->
+## Routes
 
-Using the power of [Durable Objects](https://developers.cloudflare.com/durable-objects/), this example shows website visitor locations in real-time. Anyone around the world visiting the [demo website](https://leblanctesting.templates.workers.dev) will be displayed as a dot on the globe! This template is powered by [PartyKit](https://www.partykit.io/).
+| Route | What it does |
+| --- | --- |
+| `GET /` (`?kind=setup\|track\|skin\|bundle`) | Catalog |
+| `GET /p/:id` | Product page |
+| `POST /buy/:id` | Creates a Stripe Checkout session and redirects to it |
+| `GET /success?session_id=…` | Checks the payment with Stripe and lists signed download links |
+| `POST /free/:id` | Download links for free products |
+| `GET /download?token=…` | Checks the token and streams the file from R2 |
 
-## How It Works
+## Setup
 
-Each time someone visits the page, a WebSocket connection is opened with a Durable Object that manages the state of the globe. Visitors are placed on the globe based on the geographic location of their IP address, which is exposed as a [property on the initial HTTP request](https://developers.cloudflare.com/workers/runtime-apis/request/#incomingrequestcfproperties) that establishes the WebSocket connection.
-
-The Durable Object instance that manages the state of the globe runs in one location, and handles all incoming WebSocket connections. When a new connection is established, the Durable Object broadcasts the location of the new visitor to all other active visitors, and the client adds the new visitor to the globe visualization. When someone leaves the page and their connection is closed, the Durable Object similarly broadcasts their removal. The Durable Object instance remains active as long as there is at least one open connection. If all open connections are closed, the Durable Object instance is purged from memory and remains inactive until a new visitor lands on the page, opens a connection, and restarts the lifecycle.
-
-## More on Durable Objects
-
-In this template, only one Durable Object instance is created, since all visitors should see updates from all other visitors, everywhere in the world. A more complex version of this application could instead show a map of the country the visitor is located in, and only display markers for other visitors who are located in the same country. In this case, a Durable Object instance would be created for each country, and the client would connect to and receive updates from the Durable Object instance corresponding to the visitor's country.
-
-For this example, Durable Objects are used for synchronizing but not storing state. Since visitor connections are ephemeral, and tied to the in-memory lifespan of the Durable Object instance, there's no need to use persistent storage. However, a more complex version of this application could display the all-time visitor count, which needs to be persisted beyond the in-memory lifespan of the Durable Object. In this case, the Durable Object code would use the [Durable Object Storage API](https://developers.cloudflare.com/durable-objects/api/storage-api/) to persist the value of the counter.
-
-<!-- dash-content-end -->
-
-## Getting Started
-
-Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):
-
-```
-npm create cloudflare@latest -- --template=cloudflare/templates/leblanctesting
-```
-
-A live public deployment of this template is available at [https://leblanctesting.templates.workers.dev](https://leblanctesting.templates.workers.dev)
-
-## Setup Steps
-
-1. Install the project dependencies with a package manager of your choice:
+1. Install dependencies:
    ```bash
    npm install
    ```
-2. Deploy the project!
+2. Create the R2 bucket and upload your files:
    ```bash
-   npx wrangler deploy
+   npx wrangler r2 bucket create mxbikes-shop-files
+   npx wrangler r2 object put mxbikes-shop-files/setups/sand-450f.zip --file ./sand-450f.zip --remote
    ```
+3. Edit `src/catalog.ts`: replace the example products with your own. Each product's `file` is its R2 key. Prices are in cents.
+4. Set the secrets:
+   ```bash
+   npx wrangler secret put STRIPE_SECRET_KEY        # sk_live_... from https://dashboard.stripe.com/apikeys
+   npx wrangler secret put DOWNLOAD_SIGNING_SECRET  # any long random string, e.g. `openssl rand -hex 32`
+   ```
+5. Optionally change `SITE_NAME`, `CURRENCY` and `DOWNLOAD_WINDOW_DAYS` under `vars` in `wrangler.json`.
+6. Deploy:
+   ```bash
+   npm run deploy
+   ```
+
+Product images go in `public/` (for example `public/img/sand.jpg`), referenced as `image: "/img/sand.jpg"`.
+
+## Local development
+
+```bash
+cp .dev.vars.example .dev.vars   # use a Stripe *test* key here
+npx wrangler r2 object put mxbikes-shop-files/setups/starter-450f.zip --file ./starter.zip --local
+npm run dev
+```
+
+Pay with Stripe's test card `4242 4242 4242 4242`, any future expiry date and any CVC.
+
+`npm run check` runs the typecheck and a dry-run deploy.
+
+## Selling tips
+
+- Sell content you made yourself. Don't resell other modders' tracks or bikes, or assets ripped from other games, and check PiBoSo's terms for MX Bikes content.
+- A free setup or a free track version makes a good sample. Post a lap video using your setup on YouTube or TikTok, with the shop link in the description.
+- Bundles and Discord promo codes raise the average order without you having to make more content.
