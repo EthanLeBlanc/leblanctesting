@@ -22,6 +22,18 @@ For this example, Durable Objects are used for synchronizing but not storing sta
 
 <!-- dash-content-end -->
 
+## Pendant Studio
+
+The app also includes an interactive 3D pendant maker at [`/pendant.html`](public/pendant.html), built with [three.js](https://threejs.org/). You can:
+
+- Pick a shape (heart, circle, oval, star, polygon, square, shield, teardrop or diamond) and set its size, thickness and edge bevel
+- Add a raised rim, front text (raised, engraved or cut through) and an engraving on the back
+- Choose a jump ring, side bail, hole or no bail, and set a gemstone at the top, centre or bottom
+- Preview it in gold, rose gold, silver, platinum, bronze, black steel, PLA or resin, with an estimated weight
+- Download an STL (millimetres, lying flat for printing or casting) or a GLB, save a PNG, or copy a share link that stores the design in the URL
+
+The code is in `src/client/pendant.tsx` and `src/client/pendant/`.
+
 ## Getting Started
 
 Outside of this repo, you can start a new project with this template using [C3](https://developers.cloudflare.com/pages/get-started/c3/) (the `create-cloudflare` CLI):

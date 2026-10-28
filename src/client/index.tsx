@@ -105,6 +105,10 @@ function App() {
         style={{ width: 400, height: 400, maxWidth: "100%", aspectRatio: 1 }}
       />
 
+      <p>
+        <a href="/pendant.html">Design a pendant in 3D →</a>
+      </p>
+
       {/* Let's give some credit */}
       <p>
         Powered by <a href="https://cobe.vercel.app/">🌏 Cobe</a>,{" "}
